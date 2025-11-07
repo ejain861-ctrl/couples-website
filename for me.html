@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Nupur's Answers</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #000;
+            color: #00cc33;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            border-bottom: 2px solid #00cc33;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #00cc33;
+        }
+        .header p {
+            color: #fff;
+            font-size: 1.1em;
+        }
+        .answers-container {
+            display: grid;
+            gap: 15px;
+        }
+        .question-card {
+            background: rgba(0, 204, 51, 0.1);
+            border: 1px solid #00cc33;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        .question-card.new {
+            background: rgba(0, 204, 51, 0.2);
+            border: 2px solid #00ff66;
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.3);
+        }
+        .question-number {
+            color: #00ff66;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .question-text {
+            color: #fff;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+        .answer {
+            color: #00cc33;
+            font-size: 1em;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 3px solid #00cc33;
+            min-height: 60px;
+        }
+        .answer.pending {
+            color: #666;
+            font-style: italic;
+        }
+        .timestamp {
+            color: #888;
+            font-size: 0.9em;
+            text-align: right;
+            margin-top: 10px;
+        }
+        .no-answers {
+            text-align: center;
+            color: #666;
+            font-size: 1.2em;
+            padding: 40px;
+        }
+        .last-updated {
+            text-align: center;
+            color: #888;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎂 NUPUR'S ANSWERS 🎂</h1>
+            <p>Live Answers Dashboard - Updates Automatically</p>
+        </div>
+        
+        <div class="answers-container" id="answersContainer">
+            <div class="no-answers" id="noAnswers">
+                Waiting for Nupur to start answering questions...
+            </div>
+        </div>
+        
+        <div class="last-updated" id="lastUpdated">
+            Last updated: <span id="updateTime">Never</span>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            "When did we officially get into a relationship? (Date or approx day count)",
+            "When did you realize that what we had was more than just friendship?",
+            "What makes the very base of our relationship?",
+            "If you had to pick one memory that defines 'us', which one would it be?",
+            "What is the one thing we have fought about the most? (even before us getting in a relationship)",
+            "If we were characters in a series, which one would it be?",
+            "How to comfort Nupur if she isn't feeling good?",
+            "How does Nupur usually balance her study and emotion mode?",
+            "What's one emotion Nupur hides the most — but Ekansh always notices anyway?",
+            "What is Nupur's 'priority mantra'? (one line or keyword)",
+            "What's one habit of Ekansh that Nupur secretly finds cute?",
+            "When did Nupur realize that 'ab tu mature ho gaya hai'?",
+            "What has been Ekansh's most creative gesture so far?",
+            "What did Ekansh change the most in his life and why?",
+            "Why does our connection feel like a 'home-like comfort'?",
+            "If you had to describe our rarity in one word, what would it be?",
+            "If distance didn't exist, what would you do first?",
+            "If 'home' were a feeling, where do we find it?"
+        ];
+
+        let answers = Array(18).fill(null);
+
+        function updateDisplay() {
+            const container = document.getElementById('answersContainer');
+            const noAnswers = document.getElementById('noAnswers');
+            
+            let hasAnswers = false;
+            let html = '';
+
+            for (let i = 0; i < questions.length; i++) {
+                if (answers[i] !== null) {
+                    hasAnswers = true;
+                    html += `
+                        <div class="question-card" id="q${i + 1}">
+                            <div class="question-number">Q${String(i + 1).padStart(2, '0')}</div>
+                            <div class="question-text">${questions[i]}</div>
+                            <div class="answer">${answers[i].answer}</div>
+                            <div class="timestamp">Answered at: ${new Date(answers[i].timestamp).toLocaleString()}</div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="question-card">
+                            <div class="question-number">Q${String(i + 1).padStart(2, '0')}</div>
+                            <div class="question-text">${questions[i]}</div>
+                            <div class="answer pending">Waiting for answer...</div>
+                        </div>
+                    `;
+                }
+            }
+
+            container.innerHTML = html;
+            noAnswers.style.display = hasAnswers ? 'none' : 'block';
+            
+            // Update last updated time
+            document.getElementById('updateTime').textContent = new Date().toLocaleString();
+        }
+
+        function fetchAnswers() {
+            fetch('https://nupur-bday-backend.onrender.com/get-answers')
+                .then(response => response.json())
+                .then(data => {
+                    let updated = false;
+                    data.answers.forEach(answer => {
+                        const index = answer.questionNumber - 1;
+                        if (answers[index] === null || answers[index].timestamp !== answer.timestamp) {
+                            answers[index] = answer;
+                            updated = true;
+                            
+                            // Highlight new answer
+                            setTimeout(() => {
+                                const card = document.getElementById(`q${answer.questionNumber}`);
+                                if (card) {
+                                    card.classList.add('new');
+                                    setTimeout(() => card.classList.remove('new'), 3000);
+                                }
+                            }, 100);
+                        }
+                    });
+                    
+                    if (updated) {
+                        updateDisplay();
+                    }
+                })
+                .catch(error => {
+                    console.log('Error fetching answers:', error);
+                });
+        }
+
+        // Initial display
+        updateDisplay();
+
+        // Fetch answers every 3 seconds
+        setInterval(fetchAnswers, 3000);
+
+        // Also fetch immediately
+        fetchAnswers();
+    </script>
+</body>
+</html>
